@@ -1,0 +1,56 @@
+\documentclass[10pt,a4paper,draft]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\author{Shaun Silson}
+\title{Realtime GPU-Accelerated Smoothed Particle Hydrodynamics with Rigid Body Interaction}
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+Smoothed Particle Hydrodynamics (SPH) is a popular Lagrangian fluid simulation technique. The Lagrangian approach models the fluid as a set of particles exerting pressure forces directly on each other according to a discretized version of the Navier Stokes equations while the alternative Eulerian approach models pressures flowing between cells within a fixed grid. The Eulerian model is a more direct mapping of the underlying equations. This means it simple to measure force and pressures within the grid making it well suited for engineering applications, but it is difficult to capture visually interesting detail such as bubbles, splashing and foam which is easier to do with particle-based Lagrangian methods.
+
+%\section{Background}
+%The heart of SPH is the kernel function which defines how each particle is influenced by other particles surrounding it. a radius of influence around each particle and smooths the forces applied by neighbouring particles.  While defining the kernel function is simple, the major challenge is implementing the fixed radius of influence. Since any particle could be near any other particle the naive approach would be an loop over all pairs, yet thankfully    
+
+
+\section{Aims}
+While the fundamentals of SPH are well understood and widely implemented on the GPU a big remaining area of active research is rigid-body interaction.  Our primary aim will be to incorporate rigid-fluid coupling into an existing open source system which currently lacks this feature and our secondary aim will be to enhance the performance to as close to realtime as possible.
+
+ \subsection{Solid-Fluid Coupling}
+ In order to contain a fluid it is necessary to implement boundary conditions, these are generally based on the idea that if a particle crosses the a plane it will have forces applied along the plane normal to push it back out. This technique is sufficient to model interaction with parametric shapes such as walls, spheres, cylinders and boxes but it does not work for arbitrary meshes. While it is possible to implement triangle-based collisions it is difficult to handle complex geometry. 
+
+A simpler approach is to pre-process the mesh and represent it as particles. Within the simulation a rigid body will have a mesh-shaped cloud of particles surrounding it and the resultant force will the the sum of these particles interaction with the fluid. The main concern is to ensure that the cloud is sampled at a high enough density that fluid penetration into the solid is prevented.
+ 
+ \subsection{Performance}
+
+ \subsubsection{CUDA}
+The existing implementation does not currently seem to achieve it's full potential speedup due to parallelization. We will investigate and perform any possible tuning.
+
+\subsubsection{Neighbour-Search}
+The most expensive part of SPH is determining which other particles lie within a particular particles sphere of influence. Z-indexing based on radix-sort is an efficient way of doing this.  
+ 
+ \subsubsection{Incompressibility}
+The size of the simulation timestep affects water compressbility, with a larger timestep allowing more artefacts to occur. PCISPH (Predictor-Corrector Incompressible  SPH) use a solver between simulation steps to correct compressibility artefacts allowing larger timesteps, which should improve simulation performance.
+
+\cite{Akinci2012} 
+ 
+
+%Grid-based approaches are inherently well suited to to parallelization since all interactions are between fixed neighbouring cells giving good data locality, while in the Lagrangian model any particle can interact with any other particle which means all threads need to share access to global memory.   
+
+%The underlying basis of all fluid simulations is to model a discretized  version of the Navier Stokes equations and there are two primary approaches Eulerian and Lagrangian.
+
+
+
+
+% rigid bodies in Euler?
+
+%The Eulerian approach models a fixed grid with fluid flowing between cells according to forces exerted by pressure in neighbouring cells. It is well suited to parallelization since cells only interact with fixed neighbours giving good data locality but surface extraction for rendering is not straightforward and exotic fluid effects such as bubbling and foam are difficult to achieve.
+
+\bibliographystyle{abbrv} %Style of Bibliography: plain / apalike / amsalpha / ...
+\bibliography{All} %You need a file 'literature.bib' for this.
+
+
+\end{document}
